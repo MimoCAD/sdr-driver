@@ -1,0 +1,52 @@
+[package]
+name = "sdr-driver"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+description = "One API over the sdr-* radio drivers: RTL-SDR, HackRF and USRP B2xx behind one Device, one Stream of samples, every change placed and every loss the radio counts reported"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/MimoCAD/sdr-driver"
+readme = "README.md"
+keywords = ["sdr", "rtl-sdr", "hackrf", "usrp", "radio"]
+categories = ["hardware-support"]
+
+[lib]
+doctest = false
+
+[features]
+# The pure-Rust drivers (nusb; they also build for a browser over WebUSB).
+default = ["rtl", "hackrf"]
+rtl = ["dep:sdr-rtl"]
+hackrf = ["dep:sdr-hackrf"]
+# The USRP B2xx through libuhd (needs a UHD install; see sdr-uhd's README).
+uhd = ["dep:sdr-uhd", "sdr-core/uhd"]
+
+# Each driver by version, as on crates.io, so this tree builds on its own;
+# inside the mimosdr workspace its `[patch.crates-io]` points every one
+# at the checkout beside this crate.
+[dependencies]
+sdr-core = { version = "0.1", features = ["usb"] }
+sdr-rtl = { version = "0.1", optional = true }
+sdr-hackrf = { version = "0.1", optional = true }
+sdr-uhd = { version = "0.1", optional = true }
+
+# In a browser: the device chooser over every compiled-in driver's IDs.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+nusb = "0.2"
+
+[dev-dependencies]
+# The RTL path's tests run on sdr-rtl's simulated dongle.
+sdr-rtl = { version = "0.1", features = ["mock"] }
+
+# The bench programs drive a HackRF and a USRP cabled together.
+[[example]]
+name = "drivercheck"
+required-features = ["hackrf", "uhd"]
+
+[[example]]
+name = "retunecheck"
+required-features = ["hackrf", "uhd"]
+
+[[example]]
+name = "spurcheck"
+required-features = ["hackrf", "uhd"]
